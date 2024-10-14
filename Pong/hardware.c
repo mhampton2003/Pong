@@ -6,10 +6,10 @@ void write7Segment()
 	printf("Writing to 7 Segment display");
 }
 
-// write to the LCD display
-void writeLCD()
+// write to the LCD display based on input
+void writeLCD(char text[])
 {
-	printf("Writing to LCD display");
+	printf("Writing to LCD display: %s", text);
 }
 
 // a button was pressed

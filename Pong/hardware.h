@@ -1,4 +1,4 @@
 
 void write7Segment();
-void writeLCD();
+void writeLCD(char text[]);
 void buttonInput();
