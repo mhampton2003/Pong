@@ -64,12 +64,7 @@ void gameStart()
 int main(void)
 {
 
-	gameStart();
-	gameOver();
-	incScore();
-	write7Segment();
 	writeLCD("Test print to LCD");
-	buttonInput();
 
 	return EXIT_SUCCESS;
 }
