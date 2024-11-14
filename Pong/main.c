@@ -19,7 +19,6 @@
 void incScore()
 {
 	printf("ball hits platform - score increases by 1\n");
-	write7Segment();
 }
 
 // when the ball hits the bottom edge of the screen the game is over and this will display
@@ -28,7 +27,7 @@ void gameOver()
 	printf("ball hits bottom edge - display game over screen\n");
 	writeLCD("Game Over\n");
 	// user presses button to end the game
-	buttonInput();
+	buttonPress();
 }
 
 // game starts and allows user to play
@@ -65,6 +64,10 @@ int main(void)
 {
 
 	writeLCD("Test print to LCD");
+	increase7Segment(0);
+
+
+	buttonPress();
 
 	return EXIT_SUCCESS;
 }

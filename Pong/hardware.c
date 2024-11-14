@@ -10,10 +10,98 @@
 
 #include "hardware.h"
 
-// write to 7 segment display
-void write7Segment()
+int open_physical (int fd)
 {
-	printf("Writing to 7 Segment display\n");
+   if (fd == -1)
+      if ((fd = open( "/dev/mem", (O_RDWR | O_SYNC))) == -1)
+      {
+         printf ("ERROR: could not open \"/dev/mem\"...\n");
+         return (-1);
+      }
+   return fd;
+}
+
+void* map_physical(int fd, unsigned int base, unsigned int span)
+{
+   void *virtual_base;
+
+   // Get a mapping from physical addresses to virtual addresses
+   virtual_base = mmap (NULL, span, (PROT_READ | PROT_WRITE), MAP_SHARED, fd, base);
+   if (virtual_base == MAP_FAILED)
+   {
+      printf ("ERROR: mmap() failed...\n");
+      close (fd);
+      return (NULL);
+   }
+   return virtual_base;
+}
+
+void close_physical (int fd)
+{
+   close (fd);
+}
+
+int unmap_physical(void * virtual_base, unsigned int span)
+{
+   if (munmap (virtual_base, span) != 0)
+   {
+      printf ("ERROR: munmap() failed...\n");
+      return (-1);
+   }
+   return 0;
+}
+
+// write to 7 segment display
+int increase7Segment(int count)
+{
+	void * LW_virtual;         // Lightweight bridge base address
+	volatile int *HEX_ptr;
+	int fd = -1;
+
+	if ((fd = open_physical (fd)) == -1)
+	   return (-1);
+	if ((LW_virtual = map_physical (fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN)) == NULL)
+	   return (-1);
+
+	HEX_ptr = (unsigned int *) (LW_virtual + HEX3_HEX0_BASE);
+
+	*HEX_ptr = decimal_bcd(count);
+
+	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);   // release the physical-memory mapping
+	close_physical (fd);   // close /dev/mem
+
+	return 0;
+
+}
+
+int decimal_bcd(int decimal)
+{
+	switch (decimal)
+	{
+	case 0:
+		return 0x3f;
+	case 1:
+		return 0x06;
+	case 2:
+		return 0x5b;
+	case 3:
+		return 0x4f;
+	case 4:
+		return 0x66;
+	case 5:
+		return 0x6d;
+	case 6:
+		return 0x7d;
+	case 7:
+		return 0x07;
+	case 8:
+		return 0x7f;
+	case 9:
+		return 0x67;
+	default:
+		return 0xff;
+	}
+
 }
 
 // write to the LCD display based on input
@@ -88,7 +176,47 @@ int writeLCD(char text[])
 
 // a button was pressed
 // logic for which button
-void buttonInput()
+int buttonPress()
 {
-	printf("Button was pressed\n");
+
+	void * LW_virtual;
+	volatile int* KEY_ptr;     // virtual address for the KEY port
+
+	int fd = -1;
+
+	if ((fd = open_physical (fd)) == -1)
+	   return (-1);
+	if ((LW_virtual = map_physical (fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN)) == NULL)
+	   return (-1);
+
+	KEY_ptr = LW_virtual + KEY_BASE;    // init virtual address for KEY port
+
+	while (1) {
+
+		// You can add additional logic here to handle key presses
+		// For example, check if a specific key is pressed
+		if (*KEY_ptr != 0)
+		{
+			if (*KEY_ptr & 0x1) {
+				printf("Key 0 pressed\n");
+			}
+			if (*KEY_ptr & 0x2) {
+				printf("Key 1 pressed\n");
+			}
+			if (*KEY_ptr & 0x4) {
+				printf("Key 2 pressed\n");
+			}
+			if (*KEY_ptr & 0x8) {
+				printf("Key 3 pressed\n");
+			}
+
+			usleep(200000);
+		}
+
+	}
+
+	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);   // release the physical-memory mapping
+	close_physical (fd);
+
+	return 0;
 }
