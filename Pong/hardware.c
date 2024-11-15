@@ -104,6 +104,107 @@ int decimal_bcd(int decimal)
 
 }
 
+int moveBall()
+{
+		void *virtual_base;
+		int fd;
+
+		LCD_CANVAS LcdCanvas;
+
+		// map the address space for the LED registers into user space so we can interact with them.
+		// we'll actually map in the entire CSR span of the HPS since we want to access various registers within that span
+		if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
+			printf( "ERROR: could not open \"/dev/mem\"...\n" );
+			return( 1 );
+		}
+
+		virtual_base = mmap( NULL, HW_REGS_SPAN, ( PROT_READ | PROT_WRITE ), MAP_SHARED, fd, HW_REGS_BASE );
+
+		if( virtual_base == MAP_FAILED ) {
+			printf( "ERROR: mmap() failed...\n" );
+			close( fd );
+			return( 1 );
+		}
+
+		LcdCanvas.Width = LCD_WIDTH;
+		LcdCanvas.Height = LCD_HEIGHT;
+		LcdCanvas.BitPerPixel = 1;
+		LcdCanvas.FrameSize = LcdCanvas.Width * LcdCanvas.Height / 8;
+		LcdCanvas.pFrame = (void *)malloc(LcdCanvas.FrameSize);
+
+		if (LcdCanvas.pFrame == NULL){
+				printf("failed to allocate lcd frame buffer\r\n");
+		}
+
+		else{
+
+			LCDHW_Init(virtual_base);
+			LCDHW_BackLight(true); // turn on LCD backlight
+
+			LCD_Init();
+
+			// clear screen
+			DRAW_Clear(&LcdCanvas, LCD_WHITE);
+
+			DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK); // rectangle
+			//DRAW_Circle(&LcdCanvas, 10, 10, 4, LCD_BLACK); // circle+
+			DRAW_Refresh(&LcdCanvas);
+
+			int radius = 4;
+			float x = LcdCanvas.Width / 2;
+			float y = LcdCanvas.Height / 2;
+			float vx = 25.0;
+			float vy = 10.0;
+
+			clock_t lastTime = clock();
+			int running = 1;
+
+			while(running)
+			{
+				clock_t currentTime = clock();
+				double elapsedTime = (double)(currentTime - lastTime) / CLOCKS_PER_SEC; // Convert to seconds
+				lastTime = currentTime;
+
+				DRAW_Circle(&LcdCanvas, x, y, radius, LCD_WHITE);
+				DRAW_Refresh(&LcdCanvas);
+
+				x += vx * elapsedTime * 10;
+				y += vy * elapsedTime * 10;
+
+				if (x - radius < 0 || x + radius > LcdCanvas.Width) vx = -vx; // Bounce off left/right
+				if (y - radius < 0 || y + radius > LcdCanvas.Height) vy = -vy; // Bounce off top/bottom
+
+				// Ensure the ball stays within bounds
+				if (x - radius < 0) x = radius; // Correct position if it goes out of bounds
+				if (x + radius > LcdCanvas.Width) x = LcdCanvas.Width - radius; // Correct position if it goes out of bounds
+				if (y - radius < 0) y = radius; // Correct position if it goes out of bounds
+				if (y + radius > LcdCanvas.Height) y = LcdCanvas.Height - radius;
+
+				//DRAW_Clear(&LcdCanvas, LCD_WHITE);
+				DRAW_Circle(&LcdCanvas, x, y, radius, LCD_BLACK); // circle+
+				DRAW_Refresh(&LcdCanvas);
+				usleep(100000);
+			}
+
+			DRAW_Refresh(&LcdCanvas);
+
+			DRAW_Clear(&LcdCanvas, LCD_WHITE);
+
+			free(LcdCanvas.pFrame);
+		}
+
+		// clean up our memory mapping and exit
+		if( munmap( virtual_base, HW_REGS_SPAN ) != 0 ) {
+			printf( "ERROR: munmap() failed...\n" );
+			close( fd );
+			return( 1 );
+		}
+
+		close( fd );
+
+		return( 0 );
+}
+
 // write to the LCD display based on input
 int writeLCD(char text[])
 {
@@ -154,9 +255,37 @@ int writeLCD(char text[])
 		DRAW_Clear(&LcdCanvas, LCD_WHITE);
 
 		DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK); // rectangle
-		DRAW_Circle(&LcdCanvas, 10, 10, 4, LCD_BLACK); // circle+
+		//DRAW_Circle(&LcdCanvas, 10, 10, 4, LCD_BLACK); // circle+
+		DRAW_Refresh(&LcdCanvas);
 
+		int radius = 4;
+		float x = LcdCanvas.Width / 2;
+		float y = LcdCanvas.Height / 2;
+		float vx = 1.0;
+		float vy = 0.5;
 
+		clock_t lastTime = clock();
+		int running = 1;
+
+		while(running)
+		{
+			clock_t currentTime = clock();
+			double elapsedTime = (double)(currentTime - lastTime) / CLOCKS_PER_SEC; // Convert to seconds
+			lastTime = currentTime;
+
+			x += vx * elapsedTime * 10;
+			y += vy * elapsedTime * 10;
+
+			if (x - radius < 0 || x + radius > LcdCanvas.Width) vx = -vx; // Bounce off left/right
+			if (y - radius < 0 || y + radius > LcdCanvas.Height) vy = -vy; // Bounce off top/bottom
+
+			DRAW_Clear(&LcdCanvas, LCD_WHITE);
+			DRAW_Circle(&LcdCanvas, x, y, radius, LCD_BLACK); // circle+
+			DRAW_Refresh(&LcdCanvas);
+			usleep(100000);
+		}
+
+/*
 		while(1){
 
 			if ((buttonPress() == 2) || (buttonPress() == 3))
@@ -177,7 +306,7 @@ int writeLCD(char text[])
 				DRAW_Refresh(&LcdCanvas);
 				usleep(500000);
 			}
-		}
+		}*/
 
 		DRAW_Refresh(&LcdCanvas);
 

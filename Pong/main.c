@@ -35,8 +35,10 @@ void gameStart()
 {
 	printf("Game is starting\n");
 
+
+
 	// display game components (ball and platform) no text
-	writeLCD(" ");
+	//writeLCD(" ");
 	// drop ball
 	/*
 	 * if buttonInput == left
@@ -63,7 +65,8 @@ void gameStart()
 int main(void)
 {
 
-	writeLCD("Test print to LCD");
+	//writeLCD("Test print to LCD");
+	moveBall();
 	increase7Segment(0);
 
 	return EXIT_SUCCESS;

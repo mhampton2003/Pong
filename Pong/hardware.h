@@ -19,7 +19,7 @@
 #include "address_map_arm.h"
 
 // push button
-
+int moveBall();
 
 // LCD
 #define HW_REGS_BASE ( ALT_STM_OFST )
