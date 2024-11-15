@@ -65,8 +65,7 @@ void gameStart()
 int main(void)
 {
 
-	//writeLCD("Test print to LCD");
-	moveBall();
+	writeLCD("Test print to LCD");
 	increase7Segment(0);
 
 	return EXIT_SUCCESS;
