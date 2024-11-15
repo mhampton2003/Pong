@@ -205,7 +205,18 @@ int writeLCD(char text[])
 			{
 				y = LcdCanvas.Height - radius; // Correct position if it hits bottom wall
 				vy = -vy;
-				// game over
+
+				//DRAW_Clear(&LcdCanvas, LCD_WHITE);
+				//DRAW_Refresh(&LcdCanvas);
+
+				DRAW_PrintString(&LcdCanvas, 40, 5, "GAME", LCD_BLACK, &font_16x16);
+				DRAW_PrintString(&LcdCanvas, 40, 5+16, "OVER", LCD_BLACK, &font_16x16);
+
+				DRAW_Refresh(&LcdCanvas);
+
+				free(LcdCanvas.pFrame);
+
+				return 1;
 			}
 
 			if ((y + radius > platformHeight) && (x + radius < platformX) && (x - radius > platformWidth))
@@ -239,12 +250,6 @@ int writeLCD(char text[])
 				usleep(500000);
 			}
 		}
-
-		DRAW_Refresh(&LcdCanvas);
-
-		DRAW_Clear(&LcdCanvas, LCD_WHITE);
-
-		free(LcdCanvas.pFrame);
 	}
 
 	// clean up our memory mapping and exit
