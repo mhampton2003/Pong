@@ -66,9 +66,6 @@ int main(void)
 	writeLCD("Test print to LCD");
 	increase7Segment(0);
 
-
-	buttonPress();
-
 	return EXIT_SUCCESS;
 }
 

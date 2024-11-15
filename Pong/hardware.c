@@ -108,6 +108,11 @@ int decimal_bcd(int decimal)
 int writeLCD(char text[])
 {
 
+	int platformWidth = 40;
+	int platformHeight = 55;
+	int platformX = 90;
+	int platformY = 60;
+
 	void *virtual_base;
 	int fd;
 
@@ -148,9 +153,31 @@ int writeLCD(char text[])
 		// clear screen
 		DRAW_Clear(&LcdCanvas, LCD_WHITE);
 
-		// x, y, width, height
 		DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK); // rectangle
-		DRAW_Circle(&LcdCanvas, 10, 10, 4, LCD_BLACK); // circle
+		DRAW_Circle(&LcdCanvas, 10, 10, 4, LCD_BLACK); // circle+
+
+
+		while(1){
+
+			if ((buttonPress() == 2) || (buttonPress() == 3))
+			{
+				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_WHITE);
+				platformX = platformX - 10;
+				platformWidth = platformWidth - 10;
+				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_BLACK);
+				DRAW_Refresh(&LcdCanvas);
+				usleep(500000);
+			}
+			if ((buttonPress() == 0) || (buttonPress() == 1))
+			{
+				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_WHITE);
+				platformX = platformX + 10;
+				platformWidth = platformWidth + 10;
+				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_BLACK);
+				DRAW_Refresh(&LcdCanvas);
+				usleep(500000);
+			}
+		}
 
 		DRAW_Refresh(&LcdCanvas);
 
@@ -160,7 +187,6 @@ int writeLCD(char text[])
 	}
 
 	// clean up our memory mapping and exit
-
 	if( munmap( virtual_base, HW_REGS_SPAN ) != 0 ) {
 		printf( "ERROR: munmap() failed...\n" );
 		close( fd );
@@ -191,32 +217,31 @@ int buttonPress()
 
 	KEY_ptr = LW_virtual + KEY_BASE;    // init virtual address for KEY port
 
-	while (1) {
 
 		// You can add additional logic here to handle key presses
 		// For example, check if a specific key is pressed
-		if (*KEY_ptr != 0)
-		{
-			if (*KEY_ptr & 0x1) {
-				printf("Key 0 pressed\n");
-			}
-			if (*KEY_ptr & 0x2) {
-				printf("Key 1 pressed\n");
-			}
-			if (*KEY_ptr & 0x4) {
-				printf("Key 2 pressed\n");
-			}
-			if (*KEY_ptr & 0x8) {
-				printf("Key 3 pressed\n");
-			}
-
-			usleep(200000);
+		if (*KEY_ptr & 0x1) {
+			printf("Key 0 pressed\n");
+			return 0;
+		}
+		if (*KEY_ptr & 0x2) {
+			printf("Key 1 pressed\n");
+			return 1;
+		}
+		if (*KEY_ptr & 0x4) {
+			printf("Key 2 pressed\n");
+			return 2;
+		}
+		if (*KEY_ptr & 0x8) {
+			printf("Key 3 pressed\n");
+			return 3;
 		}
 
-	}
+		usleep(200000);
+
 
 	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);   // release the physical-memory mapping
 	close_physical (fd);
 
-	return 0;
+	return -1;
 }
