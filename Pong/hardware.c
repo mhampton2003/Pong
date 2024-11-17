@@ -192,7 +192,7 @@ int drawString()
 }
 
 /*
- * initialize the LCD screen and draw initial platform and ball
+ * initilize the LCD screen and draw initial platform and ball
  */
 int writeLCD()
 {

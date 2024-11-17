@@ -11,7 +11,7 @@
 
 int main(void)
 {
-	// starts the game
+	// starts the game0
 	gameStart();
 
 	return EXIT_SUCCESS;

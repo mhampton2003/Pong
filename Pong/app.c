@@ -127,7 +127,7 @@ int gameStart()
 		if (checkCollision() == 1)
 		{
 			// if ball collides with bottom edge end the game
-			return;
+			return 0;
 		}
 
 		drawBall(x, y);

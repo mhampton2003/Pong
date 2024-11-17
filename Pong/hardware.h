@@ -8,38 +8,34 @@
  * ======================================
  */
 
-// lcd
+// lcd includes
 #include "LCD_Includes/terasic_os_includes.h"
 #include "LCD_Includes/LCD_Lib.h"
 #include "LCD_Includes/lcd_graphic.h"
 #include "LCD_Includes/font.h"
 
-// 7 segment
+// 7 segment includes
 #include <linux/kernel.h>
 #include "address_map_arm.h"
-
-// push button
-
 
 // LCD
 #define HW_REGS_BASE ( ALT_STM_OFST )
 #define HW_REGS_SPAN ( 0x04000000 )
 #define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
 
-
+// input output logic
 int increase7Segment(int count);
 int writeLCD();
 int buttonPress();
 int decimal_bcd(int decimal);
 
+// mapping
 int open_physical (int fd);
 void* map_physical(int fd, unsigned int base, unsigned int span);
 void close_physical (int fd);
 int unmap_physical(void * virtual_base, unsigned int span);
 
-
-
-int movePlatform(int value);
+// drawing
 int drawString();
 int eraseBall(float x, float y);
 int drawBall(float x, float y);
