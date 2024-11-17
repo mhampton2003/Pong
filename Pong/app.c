@@ -102,7 +102,7 @@ int movePlatform(int value)
 /*
  * game starts and user plays
  */
-void gameStart()
+int gameStart()
 {
 	clock_t lastTime = clock();
 	int running = 1;
@@ -135,8 +135,9 @@ void gameStart()
 		// moves the platform left and right based on button input
 		movePlatform(buttonPress());
 
-
 	}
+
+	return 0;
 }
 
 

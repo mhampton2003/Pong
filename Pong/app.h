@@ -15,4 +15,4 @@
 
 int movePlatform(int value);
 int checkCollision();
-void gameStart();
+int gameStart();
