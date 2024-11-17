@@ -13,7 +13,7 @@ ARCH= arm
 build: $(TARGET)
 
 
-$(TARGET): main.o hardware.o terasic_lib.o  \
+$(TARGET): main.o hardware.o app.o terasic_lib.o  \
 LCD_Lib.o LCD_Driver.o LCD_Hw.o lcd_graphic.o font.o
 	$(CC) $(LDFLAGS)   $^ -o $@   -lrt -lm
 %.o : %.c

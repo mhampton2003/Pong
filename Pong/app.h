@@ -1,12 +1,18 @@
 /*
  * ======================================
- * Name: main.h
+ * Name: app.h
  * Author: Maya Hampton
- * Version: 1.0
+ * Version: 2.0
  * Description: method signatures for all
  * functions needed for application
  * ======================================
  */
-void incScore();
-void gameOver();
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int movePlatform(int value);
+int checkCollision();
 void gameStart();

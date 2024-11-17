@@ -2,7 +2,7 @@
  * ======================================
  * Name: hardware.h
  * Author: Maya Hampton
- * Version: 1.0
+ * Version: 2.0
  * Description: method signatures for
  * all hardware functions
  * ======================================
@@ -28,7 +28,7 @@
 
 
 int increase7Segment(int count);
-int writeLCD(char text[]);
+int writeLCD();
 int buttonPress();
 int decimal_bcd(int decimal);
 
@@ -37,3 +37,11 @@ void* map_physical(int fd, unsigned int base, unsigned int span);
 void close_physical (int fd);
 int unmap_physical(void * virtual_base, unsigned int span);
 
+
+
+int movePlatform(int value);
+int drawString();
+int eraseBall(float x, float y);
+int drawBall(float x, float y);
+int drawPlatform(int x1, int y1, int x2, int y2);
+int erasePlatform(int x1, int y1, int x2, int y2);

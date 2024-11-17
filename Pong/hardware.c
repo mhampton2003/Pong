@@ -2,7 +2,7 @@
  * ======================================
  * Name: hardware.c
  * Author: Maya Hampton
- * Version: 1.0
+ * Version: 2.0
  * Description: Functionality of all
  * methods required for hardware access
  * ======================================
@@ -10,6 +10,16 @@
 
 #include "hardware.h"
 
+int platformWidth = 40;
+int platformHeight = 55;
+int platformX = 90;
+int platformY = 60;
+
+LCD_CANVAS LcdCanvas;
+
+/*
+ * opens memory space for register access
+ */
 int open_physical (int fd)
 {
    if (fd == -1)
@@ -21,6 +31,9 @@ int open_physical (int fd)
    return fd;
 }
 
+/*
+ * maps physical addresses to virtual addresses
+ */
 void* map_physical(int fd, unsigned int base, unsigned int span)
 {
    void *virtual_base;
@@ -36,11 +49,17 @@ void* map_physical(int fd, unsigned int base, unsigned int span)
    return virtual_base;
 }
 
+/*
+ * closes the physical space that registers accessed
+ */
 void close_physical (int fd)
 {
    close (fd);
 }
 
+/*
+ * unmaps the virtual addresses the physical addresses were mapped to
+ */
 int unmap_physical(void * virtual_base, unsigned int span)
 {
    if (munmap (virtual_base, span) != 0)
@@ -51,29 +70,39 @@ int unmap_physical(void * virtual_base, unsigned int span)
    return 0;
 }
 
-// write to 7 segment display
+/*
+ * display value on the 7-segment display based on input
+ */
 int increase7Segment(int count)
 {
-	void * LW_virtual;         // Lightweight bridge base address
+	void * LW_virtual;
 	volatile int *HEX_ptr;
 	int fd = -1;
 
+	// opens and maps physical addresses to virtual addresses
 	if ((fd = open_physical (fd)) == -1)
 	   return (-1);
 	if ((LW_virtual = map_physical (fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN)) == NULL)
 	   return (-1);
 
+	// initializes HEX pointer to turn on far right display
 	HEX_ptr = (unsigned int *) (LW_virtual + HEX3_HEX0_BASE);
 
+	// uses BCD decoder to display value on the far right display
 	*HEX_ptr = decimal_bcd(count);
 
-	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);   // release the physical-memory mapping
-	close_physical (fd);   // close /dev/mem
+	// unmaps and closes memory
+	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
+	close_physical (fd);
 
 	return 0;
 
 }
 
+/*
+ * decimal to BCD decoder
+ * returns BCD value based on decimal input
+ */
 int decimal_bcd(int decimal)
 {
 	switch (decimal)
@@ -104,32 +133,80 @@ int decimal_bcd(int decimal)
 
 }
 
-int initLCD() {
+/*
+ * draws a rectangle at input position to move platform
+ */
+int drawPlatform(int x1, int y1, int x2, int y2)
+{
+	// 90 60 45 55
+	DRAW_Rect(&LcdCanvas, x1, y1, x2, y2, LCD_BLACK);
+	DRAW_Refresh(&LcdCanvas);
 
 	return 0;
 }
 
-// write to the LCD display based on input
-int writeLCD(char text[])
+/*
+ * draws a rectangle in white at input position to remove platform at previous position
+ */
+int erasePlatform(int x1, int y1, int x2, int y2)
 {
-	int count = 0;
-	int platformWidth = 40;
-	int platformHeight = 55;
-	int platformX = 90;
-	int platformY = 60;
+	// 90 60 45 55
+	DRAW_Rect(&LcdCanvas, x1, y1, x2, y2, LCD_WHITE);
+	DRAW_Refresh(&LcdCanvas);
+
+	return 0;
+}
+
+/*
+ * draws a circle at input position to move ball
+ */
+int drawBall(float x, float y)
+{
+	DRAW_Circle(&LcdCanvas, x, y, 4, LCD_BLACK);
+	DRAW_Refresh(&LcdCanvas);
+
+	return 0;
+}
+
+/*
+ * draws a circle in white at input position to remove ball at previous position
+ */
+int eraseBall(float x, float y)
+{
+	DRAW_Circle(&LcdCanvas, x, y, 4, LCD_WHITE);
+	DRAW_Refresh(&LcdCanvas);
+
+	return 0;
+}
+
+/*
+ * prints text to the LCD screen
+ */
+int drawString()
+{
+	DRAW_PrintString(&LcdCanvas, 40, 5, "GAME", LCD_BLACK, &font_16x16);
+	DRAW_PrintString(&LcdCanvas, 40, 5+16, "OVER", LCD_BLACK, &font_16x16);
+	DRAW_Refresh(&LcdCanvas);
+
+	return 0;
+}
+
+/*
+ * initialize the LCD screen and draw initial platform and ball
+ */
+int writeLCD()
+{
 
 	void *virtual_base;
 	int fd;
 
-	LCD_CANVAS LcdCanvas;
-
-	// map the address space for the LED registers into user space so we can interact with them.
-	// we'll actually map in the entire CSR span of the HPS since we want to access various registers within that span
+	// open space for physical address
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
 		printf( "ERROR: could not open \"/dev/mem\"...\n" );
 		return( 1 );
 	}
 
+	// map physcial address to virtual address
 	virtual_base = mmap( NULL, HW_REGS_SPAN, ( PROT_READ | PROT_WRITE ), MAP_SHARED, fd, HW_REGS_BASE );
 
 	if( virtual_base == MAP_FAILED ) {
@@ -138,6 +215,7 @@ int writeLCD(char text[])
 		return( 1 );
 	}
 
+	// initialize canvas attributes
 	LcdCanvas.Width = LCD_WIDTH;
 	LcdCanvas.Height = LCD_HEIGHT;
 	LcdCanvas.BitPerPixel = 1;
@@ -150,163 +228,63 @@ int writeLCD(char text[])
 
 	else{
 
+		// initialize and turn on LCD
 		LCDHW_Init(virtual_base);
 		LCDHW_BackLight(true); // turn on LCD backlight
 
 		LCD_Init();
 
-		// clear screen
-		DRAW_Clear(&LcdCanvas, LCD_WHITE);
-
-		DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK); // rectangle
-		//DRAW_Circle(&LcdCanvas, 10, 10, 4, LCD_BLACK); // circle+
-		DRAW_Refresh(&LcdCanvas);
-
-		int radius = 4;
-		float x = LcdCanvas.Width / 2;
-		float y = LcdCanvas.Height / 2;
-		float vx = 100.0;
-		float vy = 50.0;
-
-		clock_t lastTime = clock();
-		int running = 1;
-
+		// turn on 7-segment display and set to 0
 		increase7Segment(0);
-		while(running)
-		{
 
-			clock_t currentTime = clock();
-			double elapsedTime = (double)(currentTime - lastTime) / CLOCKS_PER_SEC; // Convert to seconds
-			lastTime = currentTime;
-
-			DRAW_Circle(&LcdCanvas, x, y, radius, LCD_WHITE);
-			DRAW_Refresh(&LcdCanvas);
-
-			x += vx * elapsedTime * 10;
-			y += vy * elapsedTime * 10;
-
-			// Ensure the ball stays within bounds
-			if (x - radius < 0)
-			{
-				x = radius; // Correct position if it hits left wall
-				vx = -vx;
-			}
-			if (x + radius > LcdCanvas.Width)
-			{
-				x = LcdCanvas.Width - radius; // Correct position if it hits right wall
-				vx = -vx;
-			}
-			if (y - radius < 0)
-			{
-				y = radius; // Correct position if it hits top wall
-				vy = -vy;
-			}
-			if (y + radius > LcdCanvas.Height)
-			{
-				y = LcdCanvas.Height - radius; // Correct position if it hits bottom wall
-				vy = -vy;
-
-				//DRAW_Clear(&LcdCanvas, LCD_WHITE);
-				//DRAW_Refresh(&LcdCanvas);
-
-				DRAW_PrintString(&LcdCanvas, 40, 5, "GAME", LCD_BLACK, &font_16x16);
-				DRAW_PrintString(&LcdCanvas, 40, 5+16, "OVER", LCD_BLACK, &font_16x16);
-
-				DRAW_Refresh(&LcdCanvas);
-
-				free(LcdCanvas.pFrame);
-
-				return 1;
-			}
-
-			if ((y + radius > platformHeight) && (x + radius < platformX) && (x - radius > platformWidth))
-			{
-				y = platformHeight - radius;// Correct position if it hits top of platform
-				vy = -vy;
-				count = count + 1;
-				increase7Segment(count);
-			}
-
-			DRAW_Circle(&LcdCanvas, x, y, radius, LCD_BLACK); // circle+
-			DRAW_Refresh(&LcdCanvas);
-			usleep(100000);
-
-			if ((buttonPress() == 2) || (buttonPress() == 3))
-			{
-				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_WHITE);
-				platformX = platformX - 10;
-				platformWidth = platformWidth - 10;
-				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_BLACK);
-				DRAW_Refresh(&LcdCanvas);
-				usleep(500000);
-			}
-			if ((buttonPress() == 0) || (buttonPress() == 1))
-			{
-				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_WHITE);
-				platformX = platformX + 10;
-				platformWidth = platformWidth + 10;
-				DRAW_Rect(&LcdCanvas, platformX, platformY, platformWidth, platformHeight, LCD_BLACK);
-				DRAW_Refresh(&LcdCanvas);
-				usleep(500000);
-			}
-		}
+		// draw initial placement of platform and ball
+		DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK);
+		DRAW_Circle(&LcdCanvas, LcdCanvas.Width / 2, LcdCanvas.Height / 4, 4, LCD_BLACK);
+		DRAW_Refresh(&LcdCanvas);
 	}
 
-	// clean up our memory mapping and exit
-	if( munmap( virtual_base, HW_REGS_SPAN ) != 0 ) {
-		printf( "ERROR: munmap() failed...\n" );
-		close( fd );
-		return( 1 );
-	}
-
-	close( fd );
-
-	printf("Writing to LCD display: %s\n", text);
-
-	return( 0 );
+	return(0);
 }
 
-// a button was pressed
-// logic for which button
+/*
+ * checks to see which button was pressed
+ */
 int buttonPress()
 {
 
 	void * LW_virtual;
-	volatile int* KEY_ptr;     // virtual address for the KEY port
+	// virtual address for the KEY port
+	volatile int* KEY_ptr;
 
 	int fd = -1;
 
+	// opens and maps physical address to virtual address
 	if ((fd = open_physical (fd)) == -1)
 	   return (-1);
 	if ((LW_virtual = map_physical (fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN)) == NULL)
 	   return (-1);
 
-	KEY_ptr = LW_virtual + KEY_BASE;    // init virtual address for KEY port
+	// init virtual address for KEY port
+	KEY_ptr = LW_virtual + KEY_BASE;
 
+	// returns the button number based on which one was pressed
+	if (*KEY_ptr & 0x1) {
+		return 0;
+	}
+	if (*KEY_ptr & 0x2) {
+		return 1;
+	}
+	if (*KEY_ptr & 0x4) {
+		return 2;
+	}
+	if (*KEY_ptr & 0x8) {
+		return 3;
+	}
 
-		// You can add additional logic here to handle key presses
-		// For example, check if a specific key is pressed
-		if (*KEY_ptr & 0x1) {
-			//printf("Key 0 pressed\n");
-			return 0;
-		}
-		if (*KEY_ptr & 0x2) {
-			//printf("Key 1 pressed\n");
-			return 1;
-		}
-		if (*KEY_ptr & 0x4) {
-			//printf("Key 2 pressed\n");
-			return 2;
-		}
-		if (*KEY_ptr & 0x8) {
-			//printf("Key 3 pressed\n");
-			return 3;
-		}
+	usleep(200000);
 
-		usleep(200000);
-
-
-	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);   // release the physical-memory mapping
+	// release the physical-memory mapping
+	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
 	close_physical (fd);
 
 	return -1;
