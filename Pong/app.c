@@ -50,9 +50,6 @@ int checkCollision()
 	// Correct position if it hits bottom wall
 	if (y + radius > 64)
 	{
-		y = 64 - radius;
-		vy = -vy;
-
 		// end game by printing game over message and exiting loop
 		drawString();
 
@@ -104,6 +101,7 @@ int movePlatform(int value)
  */
 int gameStart()
 {
+
 	clock_t lastTime = clock();
 	int running = 1;
 
@@ -139,7 +137,6 @@ int gameStart()
 
 	return 0;
 }
-
 
 
 

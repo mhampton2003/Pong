@@ -88,9 +88,24 @@ int increase7Segment(int count)
 	// initializes HEX pointer to turn on far right display
 	HEX_ptr = (unsigned int *) (LW_virtual + HEX3_HEX0_BASE);
 
-	// uses BCD decoder to display value on the far right display
-	*HEX_ptr = decimal_bcd(count);
 
+	// uses BCD decoder to display value on the far right display
+	// if count is bigger than 9, multiple displays are needed
+	// calculates each value separately
+	if (count >= 10)
+	{
+		int x = count % 10;
+		int y = count / 10;
+		*HEX_ptr = decimal_bcd(x) | (decimal_bcd(y) << 8);
+	}
+
+	// only use one display
+	else{
+
+		*HEX_ptr = decimal_bcd(count);
+	}
+
+	//*HEX_ptr = decimal_bcd(count);
 	// unmaps and closes memory
 	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
 	close_physical (fd);
@@ -182,7 +197,7 @@ int eraseBall(float x, float y)
 /*
  * prints text to the LCD screen
  */
-int drawString()
+int drawString(int count)
 {
 	DRAW_PrintString(&LcdCanvas, 40, 5, "GAME", LCD_BLACK, &font_16x16);
 	DRAW_PrintString(&LcdCanvas, 40, 5+16, "OVER", LCD_BLACK, &font_16x16);
@@ -233,6 +248,8 @@ int writeLCD()
 		LCDHW_BackLight(true); // turn on LCD backlight
 
 		LCD_Init();
+
+		DRAW_Clear(&LcdCanvas, LCD_WHITE);
 
 		// turn on 7-segment display and set to 0
 		increase7Segment(0);
