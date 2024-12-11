@@ -2,7 +2,7 @@
  * ======================================
  * Name: app.h
  * Author: Maya Hampton
- * Version: 2.0
+ * Version: 3.0
  * Description: method signatures for all
  * functions needed for application
  * ======================================

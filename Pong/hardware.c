@@ -2,7 +2,7 @@
  * ======================================
  * Name: hardware.c
  * Author: Maya Hampton
- * Version: 2.0
+ * Version: 3.0
  * Description: Functionality of all
  * methods required for hardware access
  * ======================================
@@ -16,6 +16,19 @@ int platformX = 90;
 int platformY = 60;
 
 LCD_CANVAS LcdCanvas;
+
+/*
+ * bit structure to initialize gpio pins
+ */
+typedef struct
+{
+	unsigned int gpio0 : 4;
+	unsigned int gpio1 : 4;
+	unsigned int gpiou : 11;
+}GpioRegister;
+
+GpioRegister* gpioRegister;
+
 
 /*
  * opens memory space for register access
@@ -76,7 +89,7 @@ int unmap_physical(void * virtual_base, unsigned int span)
 int increase7Segment(int count)
 {
 	void * LW_virtual;
-	volatile int *HEX_ptr;
+	volatile unsigned int *JP1_ptr; // virutal address pointer to JP1 Expansion Port
 	int fd = -1;
 
 	// opens and maps physical addresses to virtual addresses
@@ -85,66 +98,31 @@ int increase7Segment(int count)
 	if ((LW_virtual = map_physical (fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN)) == NULL)
 	   return (-1);
 
-	// initializes HEX pointer to turn on far right display
-	HEX_ptr = (unsigned int *) (LW_virtual + HEX3_HEX0_BASE);
+	JP1_ptr = (unsigned int *) (LW_virtual + JP1_BASE);
+	*(JP1_ptr + 1) = 0x00000FF;
+	gpioRegister = (GpioRegister*)(JP1_ptr + 0);
 
-
-	// uses BCD decoder to display value on the far right display
-	// if count is bigger than 9, multiple displays are needed
-	// calculates each value separately
+	// uses two display to display the score
+	// if displays values separately once it is two digits
 	if (count >= 10)
 	{
 		int x = count % 10;
 		int y = count / 10;
-		*HEX_ptr = decimal_bcd(x) | (decimal_bcd(y) << 8);
+		gpioRegister->gpio0 = x;
+		gpioRegister->gpio1 = y;
 	}
 
-	// only use one display
-	else{
-
-		*HEX_ptr = decimal_bcd(count);
+	else
+	{
+		gpioRegister->gpio0 = count;
+		gpioRegister->gpio1 = 0;
 	}
 
-	//*HEX_ptr = decimal_bcd(count);
 	// unmaps and closes memory
 	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
 	close_physical (fd);
 
 	return 0;
-
-}
-
-/*
- * decimal to BCD decoder
- * returns BCD value based on decimal input
- */
-int decimal_bcd(int decimal)
-{
-	switch (decimal)
-	{
-	case 0:
-		return 0x3f;
-	case 1:
-		return 0x06;
-	case 2:
-		return 0x5b;
-	case 3:
-		return 0x4f;
-	case 4:
-		return 0x66;
-	case 5:
-		return 0x6d;
-	case 6:
-		return 0x7d;
-	case 7:
-		return 0x07;
-	case 8:
-		return 0x7f;
-	case 9:
-		return 0x67;
-	default:
-		return 0xff;
-	}
 
 }
 

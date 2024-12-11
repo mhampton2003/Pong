@@ -2,7 +2,7 @@
  * ======================================
  * Name: hardware.h
  * Author: Maya Hampton
- * Version: 2.0
+ * Version: 3.0
  * Description: method signatures for
  * all hardware functions
  * ======================================
@@ -17,6 +17,11 @@
 // 7 segment includes
 #include <linux/kernel.h>
 #include "address_map_arm.h"
+
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
 // LCD
 #define HW_REGS_BASE ( ALT_STM_OFST )

@@ -2,7 +2,7 @@
  * ======================================
  * Name: app.c
  * Author: Maya Hampton
- * Version: 2.0
+ * Version: 3.0
  * Description: Functionality of all
  * methods required for application
  * ======================================
@@ -11,7 +11,6 @@
 #include "app.h"
 #include "hardware.h"
 
-int count = 0;
 int platformX2 = 40;
 int platformY2 = 55;
 int platformX1 = 90;
@@ -21,6 +20,7 @@ float x = 64.0;
 float y = 16.0;
 float vx = 100.0;
 float vy = 50.0;
+int count = 0;
 
 /*
  * checks to see what the ball has collided with based on the input position
@@ -101,7 +101,6 @@ int movePlatform(int value)
  */
 int gameStart()
 {
-
 	clock_t lastTime = clock();
 	int running = 1;
 
