@@ -32,7 +32,7 @@
 int increase7Segment(int count);
 int writeLCD();
 int buttonPress();
-int decimal_bcd(int decimal);
+int switchFlip();
 
 // mapping
 int open_physical (int fd);

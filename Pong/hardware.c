@@ -17,6 +17,12 @@ int platformY = 60;
 
 LCD_CANVAS LcdCanvas;
 
+void * LW_virtual;
+volatile unsigned int *JP1_ptr; // virtual address pointer to JP1 Expansion Port
+volatile int* KEY_ptr; 			// virtual address for the KEY port
+volatile int* SW_ptr;			// virtual address for the SW port
+int fd = -1;
+
 /*
  * bit structure to initialize gpio pins
  */
@@ -88,10 +94,6 @@ int unmap_physical(void * virtual_base, unsigned int span)
  */
 int increase7Segment(int count)
 {
-	void * LW_virtual;
-	volatile unsigned int *JP1_ptr; // virutal address pointer to JP1 Expansion Port
-	int fd = -1;
-
 	// opens and maps physical addresses to virtual addresses
 	if ((fd = open_physical (fd)) == -1)
 	   return (-1);
@@ -185,7 +187,7 @@ int drawString(int count)
 }
 
 /*
- * initilize the LCD screen and draw initial platform and ball
+ * initialize the LCD screen and draw initial platform and ball
  */
 int writeLCD()
 {
@@ -199,7 +201,7 @@ int writeLCD()
 		return( 1 );
 	}
 
-	// map physcial address to virtual address
+	// map physical address to virtual address
 	virtual_base = mmap( NULL, HW_REGS_SPAN, ( PROT_READ | PROT_WRITE ), MAP_SHARED, fd, HW_REGS_BASE );
 
 	if( virtual_base == MAP_FAILED ) {
@@ -230,11 +232,11 @@ int writeLCD()
 		DRAW_Clear(&LcdCanvas, LCD_WHITE);
 
 		// turn on 7-segment display and set to 0
-		increase7Segment(0);
+		increase7Segment(8);
 
 		// draw initial placement of platform and ball
 		DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK);
-		DRAW_Circle(&LcdCanvas, LcdCanvas.Width / 2, LcdCanvas.Height / 4, 4, LCD_BLACK);
+		DRAW_Circle(&LcdCanvas, LcdCanvas.Width / 2, LcdCanvas.Height / 6, 4, LCD_BLACK);
 		DRAW_Refresh(&LcdCanvas);
 	}
 
@@ -246,12 +248,6 @@ int writeLCD()
  */
 int buttonPress()
 {
-
-	void * LW_virtual;
-	// virtual address for the KEY port
-	volatile int* KEY_ptr;
-
-	int fd = -1;
 
 	// opens and maps physical address to virtual address
 	if ((fd = open_physical (fd)) == -1)
@@ -282,5 +278,40 @@ int buttonPress()
 	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
 	close_physical (fd);
 
+	return -1;
+}
+
+/*
+ * check to see if the switch has been flipped
+ */
+int switchFlip()
+{
+
+	// opens and maps physical address to virtual address
+	if ((fd = open_physical (fd)) == -1)
+	   return (-1);
+	if ((LW_virtual = map_physical (fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN)) == NULL)
+	   return (-1);
+
+	// init virtual address for SW port
+	SW_ptr = LW_virtual + SW_BASE;
+
+	/*
+	 * check to see if the switch has changed states
+	 */
+	/*
+	if (switch changes states) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+	*/
+
+	usleep(200000);
+
+	// release the physical-memory mapping
+	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
+	close_physical (fd);
 	return -1;
 }

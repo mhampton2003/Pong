@@ -15,3 +15,4 @@
 int movePlatform(int value);
 int checkCollision();
 int gameStart();
+int checkPowerup();

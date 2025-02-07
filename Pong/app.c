@@ -17,10 +17,28 @@ int platformX1 = 90;
 int platformY1 = 60;
 int radius = 4;
 float x = 64.0;
-float y = 16.0;
+float y = 10.0;
 float vx = 100.0;
 float vy = 50.0;
 int count = 0;
+
+/*
+ * checks to see if the user has a power-up
+ */
+int checkPowerup()
+{
+	// if the user flips the switch and the score is a multiple of 5
+	// activate the power-up
+	if (switchFlip() == 1)
+	{
+		if (count / 5 == 0)
+		{
+			// slow the ball down until it collides with the platform again
+		}
+	}
+	return 0;
+}
+
 
 /*
  * checks to see what the ball has collided with based on the input position
@@ -126,6 +144,8 @@ int gameStart()
 			// if ball collides with bottom edge end the game
 			return 0;
 		}
+
+		checkPowerup();
 
 		drawBall(x, y);
 
