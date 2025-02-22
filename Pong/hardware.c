@@ -292,10 +292,8 @@ int switchFlip()
 	int fd = -1;
 	volatile int* SW_ptr;			// virtual address for the SW port
 
-	static int initialized = 0;  // Flag to track first-time initialization
-	static uint32_t prev_state = 0; // Store previous switch state
-
-	//static uint32_t prev_state = 0xFFFFFFFF; // Initialize to an invalid state
+	static int initialized = 0;  // tracks first-time initialization
+	static uint32_t prev_state = 0; // stores previous switch state
 
 	// opens and maps physical address to virtual address
 	if ((fd = open_physical (fd)) == -1)
@@ -313,20 +311,23 @@ int switchFlip()
 	if (!initialized) {
 		prev_state = curr_state;
 		initialized = 1;  // Mark as initialized
+
+		// unmap memory
 		unmap_physical(LW_virtual, LW_BRIDGE_SPAN);
 		close_physical(fd);
 		return 0;  // No change detected on first run
 	}
 
-	// Check if SW0 (bit 0) has changed
+	// Check if switch state (SW0 (using 0x1 mask)) has changed
 	if ((curr_state & 0x1) != (prev_state & 0x1)) {
 		prev_state = curr_state;  // Update previous state
+
+		// unmap memory
 		unmap_physical(LW_virtual, LW_BRIDGE_SPAN);
 		close_physical(fd);
 		return 1;  // SW0 changed
 	}
 
-	// Wait a bit to reduce polling frequency
 	usleep(200000);
 
 	return -1;
