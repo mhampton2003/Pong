@@ -42,7 +42,7 @@ int checkPowerup(int value)
 {
 	// if the user flips the switch and the score is a multiple of 5
 	// activate the power-up
-	if (value == 1/*&& count % 5 == 0*/)
+	if (value == 1 && count % 3 == 0)
 	{
 		// if either ball is inactive activate the other
 		if (ball1Active == 0 || ball2Active == 0)

@@ -86,6 +86,9 @@ int unmap_physical(void * virtual_base, unsigned int span)
 /*
  * display value on the 7-segment display based on input
  */
+#define FPGA_BASE  0xFF200000  // Base address of FPGA peripherals
+#define SCORE_REG  0x00000010  // Offset for the score counter register
+
 int increase7Segment(int count)
 {
 	void * LW_virtual;
@@ -124,6 +127,23 @@ int increase7Segment(int count)
 
 	return 0;
 
+	/*
+	volatile int *score_ptr;
+	// Memory-map FPGA
+	int fd = open("/dev/mem", O_RDWR | O_SYNC);
+	if (fd == -1) { perror("open"); exit(1); }
+
+	void *lw_bridge = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, FPGA_BASE);
+	if (lw_bridge == MAP_FAILED) { perror("mmap"); exit(1); }
+
+	score_ptr = (volatile int *)(lw_bridge + SCORE_REG);
+
+	*score_ptr = 1;  // write a pulse to counter
+	usleep(10);      // delay to ensure pulse registers
+	*score_ptr = 0;  // reset signal
+
+	return 0;
+	*/
 }
 
 /*
