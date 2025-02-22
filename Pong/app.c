@@ -22,19 +22,25 @@ float vx = 100.0;
 float vy = 50.0;
 int count = 0;
 
+float x2 = 64.0;
+float y2 = 10.0;
+float vx2 = 100.0;
+float vy2 = 50.0;
+int extraBallActive = 0;
+
+
 /*
  * checks to see if the user has a power-up
  */
-int checkPowerup()
+int checkPowerup(int value)
 {
 	// if the user flips the switch and the score is a multiple of 5
 	// activate the power-up
-	if (switchFlip() == 1)
+	if (value == 1 &&/* count % 5 == 0 && */!extraBallActive)
 	{
-		if (count / 5 == 0)
-		{
-			// slow the ball down until it collides with the platform again
-		}
+		printf("Power up activated");
+
+		extraBallActive = 1;
 	}
 	return 0;
 }
@@ -82,6 +88,44 @@ int checkCollision()
 		// hits top of platform so increase score and display on 7-segment
 		count = count + 1;
 		increase7Segment(count);
+	}
+
+	if (extraBallActive)
+	{
+		if (x2 - radius < 0)
+		{
+			x2 = radius;
+			vx2 = -vx2;
+		}
+		// Correct position if it hits right wall
+		if (x2 + radius > 128)
+		{
+			x2 = 128 - radius;
+			vx2 = -vx2;
+		}
+		// Correct position if it hits top wall
+		if (y2 - radius < 0)
+		{
+			y2 = radius;
+			vy2 = -vy2;
+		}
+		// Correct position if it hits bottom wall
+		if (y2 + radius > 64)
+		{
+			// end game by printing game over message and exiting loop
+			extraBallActive = 0;
+			eraseBall(x2, y2);
+		}
+		// Correct position if it hits top of platform
+		if ((y2 + radius > platformY2) && (x2 + radius < platformX1) && (x2 - radius > platformX2))
+		{
+			y2 = platformY2 - radius;
+			vy2 = -vy2;
+
+			// hits top of platform so increase score and display on 7-segment
+			count = count + 1;
+			increase7Segment(count);
+		}
 	}
 
 	return 0;
@@ -145,13 +189,20 @@ int gameStart()
 			return 0;
 		}
 
-		checkPowerup();
-
 		drawBall(x, y);
 
 		// moves the platform left and right based on button input
 		movePlatform(buttonPress());
 
+		checkPowerup(switchFlip());
+
+		if (extraBallActive)
+		{
+			eraseBall(x2, y2);
+			x2 += vx2 * elapsedTime * 10;
+			y2 += vy2 * elapsedTime * 10;
+			drawBall(x2, y2);
+		}
 	}
 
 	return 0;

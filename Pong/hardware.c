@@ -17,12 +17,6 @@ int platformY = 60;
 
 LCD_CANVAS LcdCanvas;
 
-void * LW_virtual;
-volatile unsigned int *JP1_ptr; // virtual address pointer to JP1 Expansion Port
-volatile int* KEY_ptr; 			// virtual address for the KEY port
-volatile int* SW_ptr;			// virtual address for the SW port
-int fd = -1;
-
 /*
  * bit structure to initialize gpio pins
  */
@@ -94,6 +88,10 @@ int unmap_physical(void * virtual_base, unsigned int span)
  */
 int increase7Segment(int count)
 {
+	void * LW_virtual;
+	volatile unsigned int *JP1_ptr; // virtual address pointer to JP1 Expansion Port
+	int fd = -1;
+
 	// opens and maps physical addresses to virtual addresses
 	if ((fd = open_physical (fd)) == -1)
 	   return (-1);
@@ -232,7 +230,7 @@ int writeLCD()
 		DRAW_Clear(&LcdCanvas, LCD_WHITE);
 
 		// turn on 7-segment display and set to 0
-		increase7Segment(8);
+		increase7Segment(0);
 
 		// draw initial placement of platform and ball
 		DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK);
@@ -248,6 +246,10 @@ int writeLCD()
  */
 int buttonPress()
 {
+
+	void * LW_virtual;
+	int fd = -1;
+	volatile int* KEY_ptr; 			// virtual address for the KEY port
 
 	// opens and maps physical address to virtual address
 	if ((fd = open_physical (fd)) == -1)
@@ -286,6 +288,14 @@ int buttonPress()
  */
 int switchFlip()
 {
+	void * LW_virtual;
+	int fd = -1;
+	volatile int* SW_ptr;			// virtual address for the SW port
+
+	static int initialized = 0;  // Flag to track first-time initialization
+	static uint32_t prev_state = 0; // Store previous switch state
+
+	//static uint32_t prev_state = 0xFFFFFFFF; // Initialize to an invalid state
 
 	// opens and maps physical address to virtual address
 	if ((fd = open_physical (fd)) == -1)
@@ -296,22 +306,28 @@ int switchFlip()
 	// init virtual address for SW port
 	SW_ptr = LW_virtual + SW_BASE;
 
-	/*
-	 * check to see if the switch has changed states
-	 */
-	/*
-	if (switch changes states) {
-		return 1;
-	}
-	else {
-		return 0;
-	}
-	*/
+	// Read the current state of the switches
+	uint32_t curr_state = *SW_ptr;
 
+	// If it's the first time running, set prev_state to current state and return 0
+	if (!initialized) {
+		prev_state = curr_state;
+		initialized = 1;  // Mark as initialized
+		unmap_physical(LW_virtual, LW_BRIDGE_SPAN);
+		close_physical(fd);
+		return 0;  // No change detected on first run
+	}
+
+	// Check if SW0 (bit 0) has changed
+	if ((curr_state & 0x1) != (prev_state & 0x1)) {
+		prev_state = curr_state;  // Update previous state
+		unmap_physical(LW_virtual, LW_BRIDGE_SPAN);
+		close_physical(fd);
+		return 1;  // SW0 changed
+	}
+
+	// Wait a bit to reduce polling frequency
 	usleep(200000);
 
-	// release the physical-memory mapping
-	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
-	close_physical (fd);
 	return -1;
 }
