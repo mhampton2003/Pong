@@ -200,11 +200,12 @@ int movePlatform(int value)
  */
 int gameStart()
 {
+
 	clock_t lastTime = clock();
 	int running = 1;
 
 	// LCD screen is initialized
-	writeLCD();
+	initLCD();
 
 	// while the ball hasn't touched the bottom edge
 	while (running)

@@ -18,19 +18,6 @@ int platformY = 60;
 LCD_CANVAS LcdCanvas;
 
 /*
- * bit structure to initialize gpio pins
- */
-typedef struct
-{
-	unsigned int gpio0 : 4;
-	unsigned int gpio1 : 4;
-	unsigned int gpiou : 11;
-}GpioRegister;
-
-GpioRegister* gpioRegister;
-
-
-/*
  * opens memory space for register access
  */
 int open_physical (int fd)
@@ -84,12 +71,10 @@ int unmap_physical(void * virtual_base, unsigned int span)
 }
 
 /*
- * display value on the 7-segment display based on input
+ * increases the score by 1 using the counter circuit and displays on 7-seg display
  */
-#define FPGA_BASE  0xFF200000  // Base address of FPGA peripherals
-#define SCORE_REG  0x00000010  // Offset for the score counter register
 
-int increase7Segment(int count)
+int increase7Segment()
 {
 	void * LW_virtual;
 	volatile unsigned int *JP1_ptr; // virtual address pointer to JP1 Expansion Port
@@ -101,49 +86,21 @@ int increase7Segment(int count)
 	if ((LW_virtual = map_physical (fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN)) == NULL)
 	   return (-1);
 
+	// pointer to access GPIO pins using JP1
 	JP1_ptr = (unsigned int *) (LW_virtual + JP1_BASE);
-	*(JP1_ptr + 1) = 0x00000FF;
-	gpioRegister = (GpioRegister*)(JP1_ptr + 0);
 
-	// uses two display to display the score
-	// if displays values separately once it is two digits
-	if (count >= 10)
-	{
-		int x = count % 10;
-		int y = count / 10;
-		gpioRegister->gpio0 = x;
-		gpioRegister->gpio1 = y;
-	}
+	// set GPIO[0] as output
+	*(JP1_ptr + 1) |= (1 << 0);
 
-	else
-	{
-		gpioRegister->gpio0 = count;
-		gpioRegister->gpio1 = 0;
-	}
+	// sends high pulse to GPIO[0]
+	*JP1_ptr |= (1 << 0);
 
-	// unmaps and closes memory
-	unmap_physical (LW_virtual, LW_BRIDGE_SPAN);
-	close_physical (fd);
+	usleep(100);
+
+	// sends low pulse to GPIO[0]
+	*JP1_ptr &= ~(1 << 0);
 
 	return 0;
-
-	/*
-	volatile int *score_ptr;
-	// Memory-map FPGA
-	int fd = open("/dev/mem", O_RDWR | O_SYNC);
-	if (fd == -1) { perror("open"); exit(1); }
-
-	void *lw_bridge = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, FPGA_BASE);
-	if (lw_bridge == MAP_FAILED) { perror("mmap"); exit(1); }
-
-	score_ptr = (volatile int *)(lw_bridge + SCORE_REG);
-
-	*score_ptr = 1;  // write a pulse to counter
-	usleep(10);      // delay to ensure pulse registers
-	*score_ptr = 0;  // reset signal
-
-	return 0;
-	*/
 }
 
 /*
@@ -207,7 +164,7 @@ int drawString(int count)
 /*
  * initialize the LCD screen and draw initial platform and ball
  */
-int writeLCD()
+int initLCD()
 {
 
 	void *virtual_base;

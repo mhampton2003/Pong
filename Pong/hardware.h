@@ -29,8 +29,8 @@
 #define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
 
 // input output logic
-int increase7Segment(int count);
-int writeLCD();
+int increase7Segment();
+int initLCD();
 int buttonPress();
 int switchFlip();
 
