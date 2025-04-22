@@ -2,7 +2,7 @@
  * ======================================
  * Name: hardware.c
  * Author: Maya Hampton
- * Version: 3.0
+ * Version: 5.0
  * Description: Functionality of all
  * methods required for hardware access
  * ======================================
