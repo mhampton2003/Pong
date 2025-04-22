@@ -92,10 +92,11 @@ int increase7Segment()
 	// set GPIO[0] as output
 	*(JP1_ptr + 1) |= (1 << 0);
 
+
 	// sends high pulse to GPIO[0]
 	*JP1_ptr |= (1 << 0);
 
-	usleep(100);
+	usleep(50);
 
 	// sends low pulse to GPIO[0]
 	*JP1_ptr &= ~(1 << 0);
@@ -205,9 +206,6 @@ int initLCD()
 		LCD_Init();
 
 		DRAW_Clear(&LcdCanvas, LCD_WHITE);
-
-		// turn on 7-segment display and set to 0
-		increase7Segment(0);
 
 		// draw initial placement of platform and ball
 		DRAW_Rect(&LcdCanvas, 90, 60, 45, 55, LCD_BLACK);

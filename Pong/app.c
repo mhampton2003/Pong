@@ -31,8 +31,7 @@ float vy2 = 50.0;
 int ball1Active = 1;
 int ball2Active = 0;
 
-int count = 0; // score
-
+int count = 0;
 
 /*
  * checks to see if the user has a power-up
@@ -111,7 +110,7 @@ int checkCollision()
 
 			// hits top of platform so increase score and display on 7-segment
 			count = count + 1;
-			increase7Segment(count);
+			increase7Segment();
 		}
 	}
 
@@ -161,7 +160,7 @@ int checkCollision()
 
 			// hits top of platform so increase score and display on 7-segment
 			count = count + 1;
-			increase7Segment(count);
+			increase7Segment();
 		}
 	}
 
